@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,7 +18,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import robocode.BattleResults;
 import robocode.control.*;
@@ -34,17 +39,32 @@ public class BattleRunner {
      */
     public static void main(String[] args) {
         //-DROBOTPATH=C:/Users/v.tassinari/Documents/NetBeansProjects/War/dist/War.jar
-        
-        //Cria um compilador em tempo de execução
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        //O compilador procura e compila o arquivo .java no caminho especificado.
-        System.out.println(compiler.run(null, null, null, "C:/Users/v.tassinari/Documents/NetBeansProjects/War/src/Tank/SmartShooter.java"));
         try {
+            //Cria um compilador em tempo de execução
+            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+            StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Arrays
+                    .asList(new File("C:/Users/v.tassinari/Documents/NetBeansProjects/War/build/classes/")));
+            Arrays.asList(
+                            new File("C:/Users/v.tassinari/Documents/NetBeansProjects/War/src/Tank/").listFiles()).forEach(file->{
+                                System.out.println(file.getName());
+                            });
+            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+            System.out.println(compiler.getTask(null, fileManager, diagnostics, null, null, fileManager
+                    .getJavaFileObjects(
+                            new File("C:/Users/v.tassinari/Documents/NetBeansProjects/War/src/Tank/").listFiles())).call());
+            
+            /*
+            //O compilador procura e compila o arquivo .java no caminho especificado.
+            System.out.println(compiler.run(null, null, null, "C:/Users/v.tassinari/Documents/NetBeansProjects/War/src/Tank/SmartShooter.java"));
+
             //Procura o arquivo antigo já compilado e deleta o mesmo
             File file = new File("C:/Users/v.tassinari/Documents/NetBeansProjects/War/build/classes/Tank/SmartShooter.class");
             file.delete();
             //Move o arquivo compilado para o caminho em que o antigo arquivo estava.
-            Files.move(Paths.get("C:/Users/v.tassinari/Documents/NetBeansProjects/War/src/Tank/SmartShooter.class"), Paths.get("C:/Users/v.tassinari/Documents/NetBeansProjects/War/build/classes/Tank/SmartShooter.class"));
+            Files.move(Paths.get("C:/Users/v.tassinari/Documents/NetBeansProjects/War/src/Tank/SmartShooter.class"),
+                Paths.get("C:/Users/v.tassinari/Documents/NetBeansProjects/War/build/classes/Tank/SmartShooter.class"));
+            */
         } catch (IOException ex) {
             Logger.getLogger(BattleRunner.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -55,7 +75,7 @@ public class BattleRunner {
 
         //Carrega o robocode.
         RobocodeEngine engine = new RobocodeEngine(new java.io.File("C:/Robocode"));
-        
+
         //Cria um monitor de batalha, utilizado aqui apenas para pegar os resultados das batalhas, e visualizar possiveis erros.
         engine.addBattleListener(new BattleAdaptor() {
             @Override
@@ -66,7 +86,7 @@ public class BattleRunner {
                     System.out.println("Robo: " + result.getTeamLeaderName() + " score: " + result.getScore());
                 });
             }
-            
+
             @Override
             public void onBattleError(BattleErrorEvent event) {
                 super.onBattleError(event); //To change body of generated methods, choose Tools | Templates.
@@ -77,7 +97,7 @@ public class BattleRunner {
         //Tamanho do campo de batalha.
         BattlefieldSpecification field = new BattlefieldSpecification(800, 800);
         //Definição dos robos que irão para batalha.
-        RobotSpecification[] robots = engine.getLocalRepository("sample.Tracker,Tank.SmartShooter*");
+        RobotSpecification[] robots = engine.getLocalRepository("sample.Tracker,Tank.SmartShooter*,Tank.batman*");
         BattleSpecification battle = new BattleSpecification(5, field, robots);
         //Exibição da batalha.
         engine.setVisible(true);
